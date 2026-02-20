@@ -110,21 +110,21 @@ REGULER | BDG | IG DM FIXED | WFO | NIK: 25286329
 
 <script>
 
-let jadwal = JSON.parse(localStorage.getItem("jadwalRichard")) || {};
+const API_URL = "AKfycbwtG61x-A58rJ6mwR8PLuA1AGLIi9mMCE77VyJaPRVAXuUD35qHSdb8ydKlDT5DUFRv";
 
-function prosesPaste(){
+async function prosesPaste(){
 
 let text = document.getElementById("pasteData").value.trim();
 
 if(!text){
-alert("Paste dulu datanya!");
-return;
+    alert("Paste dulu datanya!");
+    return;
 }
 
 // Pisah berdasarkan TAB
 let data = text.split("\t");
 
-let tanggalFull = data[0]; // 17 Februari 2026
+let tanggalFull = data[0];
 let kode = data[1];
 let masuk = data[3];
 let pulang = data[4];
@@ -132,7 +132,7 @@ let i1 = data[5];
 let i2 = data[6];
 let i3 = data[7];
 
-// Ambil tanggal saja (format YYYY-MM-DD)
+// Ambil tanggal (format YYYY-MM-DD)
 let parts = tanggalFull.split(" ");
 let tgl = parts[0];
 let bulanNama = parts[1];
@@ -145,17 +145,25 @@ let bulanMap = {
 };
 
 let bulanAngka = bulanMap[bulanNama];
-
 let tanggalKey = tahun + "-" + bulanAngka + "-" + tgl.padStart(2,'0');
 
-jadwal[tanggalKey] = {
-kode, masuk, pulang, i1, i2, i3
-};
-
-localStorage.setItem("jadwalRichard", JSON.stringify(jadwal));
+// Kirim ke Google Sheet
+await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify({
+        tanggal: tanggalKey,
+        kode: kode,
+        masuk: masuk,
+        pulang: pulang,
+        i1: i1,
+        i2: i2,
+        i3: i3
+    })
+});
 
 document.getElementById("pasteData").value = "";
 
+alert("Data berhasil disimpan!");
 filterData();
 }
 
@@ -164,14 +172,14 @@ let tanggalSelect = document.getElementById("tanggal");
 tanggalSelect.innerHTML = "";
 
 for(let i=1;i<=31;i++){
-let opt = document.createElement("option");
-opt.value = i.toString().padStart(2,'0');
-opt.text = i;
-tanggalSelect.appendChild(opt);
+    let opt = document.createElement("option");
+    opt.value = i.toString().padStart(2,'0');
+    opt.text = i;
+    tanggalSelect.appendChild(opt);
 }
 }
 
-function filterData(){
+async function filterData(){
 
 let bulan = document.getElementById("bulan").value;
 let tanggal = document.getElementById("tanggal").value;
@@ -180,31 +188,44 @@ body.innerHTML = "";
 
 let key = "2026-" + bulan + "-" + tanggal;
 
-if(jadwal[key]){
-let d = jadwal[key];
-body.innerHTML = `
-<tr>
-<td>${key}</td>
-<td>${d.kode}</td>
-<td>${d.masuk}</td>
-<td>${d.pulang}</td>
-<td>${d.i1}</td>
-<td>${d.i2}</td>
-<td>${d.i3}</td>
-<td>Masuk</td>
-</tr>`;
-}else{
-body.innerHTML = `
-<tr>
-<td>${key}</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td>-</td>
-<td class="libur">LIBUR</td>
-</tr>`;
+// Ambil semua data dari Sheet
+let res = await fetch(API_URL);
+let data = await res.json();
+
+// Buang header
+data.shift();
+
+let ditemukan = false;
+
+data.forEach(row => {
+    if(row[0] === key){
+        ditemukan = true;
+        body.innerHTML = `
+        <tr>
+        <td>${row[0]}</td>
+        <td>${row[1]}</td>
+        <td>${row[2]}</td>
+        <td>${row[3]}</td>
+        <td>${row[4]}</td>
+        <td>${row[5]}</td>
+        <td>${row[6]}</td>
+        <td>Masuk</td>
+        </tr>`;
+    }
+});
+
+if(!ditemukan){
+    body.innerHTML = `
+    <tr>
+    <td>${key}</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td>-</td>
+    <td class="libur">LIBUR</td>
+    </tr>`;
 }
 }
 
