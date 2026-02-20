@@ -110,8 +110,8 @@ REGULER | BDG | IG DM FIXED | WFO | NIK: 25286329
 
 <script>
 
-const API_URL = "https://script.google.com/macros/s/AKfycbxDmLSACmGNet-OJn-FhfcHv6kX_GbSC8sDnhff6Tq5S5woJjXKgzSe0azrqbCC9HNR/exec";
-    
+const API_URL = "https://script.google.com/macros/s/AKfycbwPKRoN3axF1KOtm6-FVqf2ksvm104mEMd2LENE_tNTWo4v_fPJB8aZcKWfVb_ZxVGl/exec";
+
 async function prosesPaste(){
 
 let text = document.getElementById("pasteData").value.trim();
@@ -152,7 +152,8 @@ await fetch(API_URL, {
     method: "POST",
     body: JSON.stringify({
         tanggal: tanggalKey,
-        kode: kode,
+        pola: kode,
+        channel: "IG DM FIXED",
         masuk: masuk,
         pulang: pulang,
         i1: i1,
